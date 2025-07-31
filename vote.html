@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>小区包阳台方案投票系统</title>
+    <script src="https://cdn.jsdelivr.net/gh/davidshimjs/qrcodejs@gh-pages/qrcode.min.js"></script>
+    <style>
+        * { 
+            box-sizing: border-box; 
+            font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Microsoft YaHei", sans-serif; 
+            -webkit-tap-highlight-color: transparent;
+        }
+        body { 
+            max-width: 100%; 
+            margin: 0; 
+            padding: 15px; 
+            background: #f5f7fa; 
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        .card { 
+            background: white; 
+            border-radius: 16px; 
+            box-shadow: 0 6px 16px rgba(0,0,0,0.08); 
+            padding: 25px; 
+            margin-bottom: 20px; 
+            position: relative;
+            overflow: hidden;
+        }
+        h1 { 
+            color: #2c3e50; 
+            text-align: center; 
+            margin: 10px 0 20px;
+            font-size: 1.5rem;
+        }
+        .step { 
+            display: none; 
+            animation: fadeIn 0.4s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .active { display: block; }
+        input, button, .btn { 
+            padding: 14px 18px; 
+            width: 100%; 
+            margin: 12px 0; 
+            border: 1px solid #e1e5e9; 
+            border-radius: 12px; 
+            font-size: 16px; 
+            outline: none;
+            transition: all 0.2s;
+        }
+        input {
+            background: #f9fbfd;
+        }
+        input:focus {
+            border-color: #3498db;
+            box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+        }
+        button, .btn { 
+            background: #3498db; 
+            color: white; 
+            font-weight: 600; 
+            border: none; 
+            cursor: pointer; 
+            text-align: center;
+            display: block;
+            letter-spacing: 0.5px;
+            font-size: 17px;
+        }
+        button:hover, .btn:hover { 
+            background: #2980b9; 
+            transform: translateY(-2px); 
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+        .option { 
+            display: flex; 
+            align-items: center; 
+            padding: 18px 20px; 
+            border: 2px solid #edf2f7; 
+            border-radius: 14px; 
+            margin: 15px 0; 
+            cursor: pointer; 
+            transition: all 0.2s;
+            background: #fcfdff;
+        }
+        .option:hover { 
+            border-color: #3498db; 
+            background: #f8fafd; 
+        }
+        .option.selected { 
+            border-color: #3498db; 
+            background: #e1f0fa; 
+            box-shadow: 0 4px 10px rgba(52, 152, 219, 0.15);
+        }
+        .radio { 
+            width: 24px; 
+            height: 24px; 
+            border: 2px solid #95a5a6; 
+            border-radius: 50%; 
+            margin-right: 18px; 
+            position: relative; 
+            flex-shrink: 0;
+        }
+        .radio:after { 
+            content: ""; 
+            position: absolute; 
+            width: 14px; 
+            height: 14px; 
+            background: #3498db; 
+            border-radius: 50%; 
+            top: 3px; 
+            left: 3px; 
+            display: none; 
+        }
+        .selected .radio:after { display: block; }
+        .result-bar { 
+            height: 30px; 
+            background: #ecf0f1; 
+            border-radius: 15px; 
+            margin: 18px 0; 
+            overflow: hidden; 
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        .fill { 
+            height: 100%; 
+            border-radius: 15px; 
+            text-align: center; 
+            color: white; 
+            font-weight: bold; 
+            font-size: 14px;
+            line-height: 30px;
+            text-shadow: 0 1px 1px rgba(0,0,0,0.2);
+            transition: width 0.8s ease;
+        }
+        .success { background: linear-gradient(90deg, #2ecc71, #1abc9c); }
+        .danger { background: linear-gradient(90deg, #e74c3c, #c0392b); }
+        .info { background: linear-gradient(90deg, #3498db, #2980b9); }
+        .error-msg { 
+            color: #e74c3c; 
+            font-size: 14px; 
+            margin-top: -8px; 
+            margin-bottom: 10px;
+            display: none;
+        }
+        .success-icon {
+            width: 80px;
+            height: 80px;
+            margin: 10px auto 20px;
+            display: block;
+            color: #2ecc71;
+        }
+        .footer {
+            text-align: center;
+            color: #95a5a6;
+            font-size: 13px;
+            padding: 20px 0;
+        }
+        .admin-link {
+            display: block;
+            text-align: center;
+            color: #3498db;
+            text-decoration: none;
+            margin: 15px 0;
+            font-weight: 500;
+        }
+        .qr-container {
+            text-align: center;
+            padding: 20px;
+            margin-top: 20px;
+            background: #f8fafd;
+            border-radius: 16px;
+        }
+        .qr-code {
+            width: 180px;
+            height: 180px;
+            margin: 0 auto;
+            background: white;
+            padding: 10px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .qr-text {
+            font-size: 14px;
+            color: #7f8c8d;
+            margin-top: 12px;
+        }
+        .share-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: 15px;
+            justify-content: center;
+        }
+        .share-btn {
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: none;
+            color: white;
+            flex: 1;
+            max-width: 120px;
+        }
+        .share-btn.wechat {
+            background: #07c160;
+        }
+        .share-btn.copy {
+            background: #3498db;
+        }
+        .share-btn:hover {
+            opacity: 0.9;
+            transform: translateY(-1px);
+        }
+        .deploy-notice {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+            border-radius: 8px;
+            padding: 15px;
+            margin: 15px 0;
+            font-size: 14px;
+            color: #856404;
+        }
+        .deploy-notice h4 {
+            margin: 0 0 10px 0;
+            color: #856404;
+        }
+        .deploy-notice ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+        .deploy-notice li {
+            margin: 5px 0;
+        }
+        .reset-btn {
+            background: #e74c3c;
+            margin-top: 10px;
+        }
+        @media (max-width: 480px) {
+            body { padding: 12px; }
+            .card { padding: 20px 18px; }
+            h1 { font-size: 1.4rem; }
+            .option { padding: 16px; }
+            .share-buttons {
+                flex-direction: column;
+                align-items: center;
+            }
+            .share-btn {
+                max-width: 200px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="card">
+            <h1 id="voteTitle">小区包阳台方案投票</h1>
+            
+            <!-- 部署说明 -->
+            <div class="deploy-notice">
+                <h4>📱 微信分享说明</h4>
+                <p>为了让微信扫描二维码能正常打开投票页面，请按以下步骤操作：</p>
+                <ul>
+                    <li><strong>方法1：</strong> 将HTML文件上传到网络服务器（如GitHub Pages、Vercel等）</li>
+                    <li><strong>方法2：</strong> 使用微信内置浏览器打开此页面，然后分享到微信群</li>
+                    <li><strong>方法3：</strong> 点击下方"复制链接"按钮，将链接发送到微信群</li>
+                </ul>
+            </div>
+            
+            <!-- 步骤1: 门牌号验证 -->
+            <div id="step1" class="step active">
+                <p>请输入您的门牌号：</p>
+                <input type="text" id="houseInput" placeholder="例如: 1-502, 4-1-802, 7-202">
+                <p id="errorMsg" class="error-msg">门牌号无效或不存在</p>
+                <button onclick="verifyHouse()">验证门牌号</button>
+                
+                <div class="qr-container">
+                    <div class="qr-code" id="qrCode"></div>
+                    <p class="qr-text">手机扫码分享投票</p>
+                    <div class="share-buttons">
+                        <button class="share-btn wechat" onclick="shareToWechat()">分享到微信</button>
+                        <button class="share-btn copy" onclick="copyLink()">复制链接</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 步骤2: 投票选择 -->
+            <div id="step2" class="step">
+                <p>请选择您的投票：</p>
+                <div class="option" onclick="selectOption(0)">
+                    <div class="radio"></div>
+                    <span>同意包阳台方案</span>
+                </div>
+                <div class="option" onclick="selectOption(1)">
+                    <div class="radio"></div>
+                    <span>反对包阳台方案</span>
+                </div>
+                <div class="option" onclick="selectOption(2)">
+                    <div class="radio"></div>
+                    <span>弃权</span>
+                </div>
+                <button onclick="submitVote()">提交投票</button>
+                <a href="#" class="admin-link" onclick="showAdmin()">管理员入口</a>
+            </div>
+            
+            <!-- 步骤3: 投票确认 -->
+            <div id="step3" class="step">
+                <svg class="success-icon" viewBox="0 0 24 24">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 15l-5-5 1.41-1.41L10 14.17l7.59-7.59L19 8l-9 9z"></path>
+                </svg>
+                <h2 style="text-align:center; color:#2c3e50;">投票成功！</h2>
+                <p style="text-align:center;" id="voteResult"></p>
+                <button class="btn" onclick="location.reload()">返回首页</button>
+                <a href="#" class="admin-link" onclick="showAdmin()">查看统计结果</a>
+            </div>
+        </div>
+        
+        <!-- 管理员面板 -->
+        <div id="adminPanel" class="card" style="display:none;">
+            <h2>投票管理系统</h2>
+            <p><input type="password" id="adminPass" placeholder="输入管理员密码"></p>
+            <button onclick="loadStats()">查看统计</button>
+            
+            <div id="stats" style="display:none; margin-top:30px;">
+                <div style="display:flex; justify-content:space-between; gap:15px;">
+                    <div style="text-align:center; flex:1; background:#f8fafd; padding:15px; border-radius:12px;">
+                        <div style="font-size:28px; font-weight:bold; color:#2c3e50;" id="totalHouses">0</div>
+                        <div style="color:#7f8c8d; margin-top:5px;">总户数</div>
+                    </div>
+                    <div style="text-align:center; flex:1; background:#f8fafd; padding:15px; border-radius:12px;">
+                        <div style="font-size:28px; font-weight:bold; color:#3498db;" id="votedHouses">0</div>
+                        <div style="color:#7f8c8d; margin-top:5px;">已投票</div>
+                    </div>
+                    <div style="text-align:center; flex:1; background:#f8fafd; padding:15px; border-radius:12px;">
+                        <div style="font-size:28px; font-weight:bold; color:#2ecc71;" id="voteRatio">0%</div>
+                        <div style="color:#7f8c8d; margin-top:5px;">参与率</div>
+                    </div>
+                </div>
+                
+                <h3 style="margin-top:30px; color:#2c3e50;">投票分布</h3>
+                <div id="agreeStats" style="margin-bottom:25px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span>同意</span>
+                        <span><span id="agreeCount">0</span> (<span id="agreePercent">0%</span>)</span>
+                    </div>
+                    <div class="result-bar"><div class="fill success" style="width:0%"></div></div>
+                </div>
+                <div id="disagreeStats" style="margin-bottom:25px;">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span>反对</span>
+                        <span><span id="disagreeCount">0</span> (<span id="disagreePercent">0%</span>)</span>
+                    </div>
+                    <div class="result-bar"><div class="fill danger" style="width:0%"></div></div>
+                </div>
+                <div id="abstainStats">
+                    <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                        <span>弃权</span>
+                        <span><span id="abstainCount">0</span> (<span id="abstainPercent">0%</span>)</span>
+                    </div>
+                    <div class="result-bar"><div class="fill info" style="width:0%"></div></div>
+                </div>
+                
+                <h3 style="margin-top:30px; color:#2c3e50;">投票结果</h3>
+                <div id="finalResult" style="padding:20px; background:#f8f9fa; border-radius:12px; text-align:center; font-size:18px; font-weight:bold; margin:20px 0;">
+                    - 等待统计 -
+                </div>
+                
+                <h3 style="margin-top:30px; color:#2c3e50;">单户重置</h3>
+                <p>重置指定门牌号的投票：</p>
+                <input type="text" id="resetHouseInput" placeholder="输入要重置的门牌号">
+                <button class="reset-btn" onclick="resetSingleVote()">重置该户投票</button>
+                
+                <button onclick="exportData()" style="background:#27ae60; margin-top:20px;">导出投票数据</button>
+                <button onclick="resetVotes()" style="background:#e74c3c; margin-top:10px;">重置全部投票</button>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>小区包阳台方案投票系统 &copy; 2025</p>
+            <p>少数服从多数原则 | 每户一票</p>
+        </div>
+    </div>
+
+    <script>
+        // 门牌号数据（从Excel提取）
+        const validHouses = [
+            "1-201","1-202","1-301","1-302","1-401","1-402","1-501","1-502","1-601","1-602",
+            "1-701","1-702","1-801","1-802","1-901","1-902","1-1001","1-1002","1-1101","1-1102",
+            "1-1201","1-1202","1-1301","1-1302","1-1401","1-1402","1-1501","1-1502","1-1601","1-1602",
+            "1-1701","1-1702","1-1801","1-1802","1-1901","1-1902","1-2001","1-2002","1-2101","1-2102",
+            "1-2201","1-2202","1-2301","1-2302","1-2401","1-2402",
+            "3-101","3-201","3-202","3-301","3-302","3-401","3-402","3-501","3-502","3-601",
+            "3-602","3-701","3-702","3-801","3-802","3-901","3-902","3-1001","3-1002","3-1101",
+            "3-1102","3-1201","3-1202","3-1301","3-1302","3-1401","3-1402","3-1501","3-1502","3-1601",
+            "3-1602","3-1701","3-1702","3-1801","3-1802","3-1901","3-1902","3-2001","3-2002","3-2101",
+            "3-2102","3-2201","3-2202","3-2301","3-2302","3-2401","3-2402","3-2501","3-2502",
+            "4-1-101","4-1-102","4-1-201","4-1-202","4-1-301","4-1-302","4-1-401","4-1-402","4-1-501",
+            "4-1-502","4-1-601","4-1-602","4-1-701","4-1-702","4-1-801","4-1-802","4-1-901","4-1-902",
+            "4-1-1001","4-1-1002","4-1-1101","4-1-1102","4-1-1201","4-1-1202","4-1-1301","4-1-1302",
+            "4-1-1401","4-1-1402","4-1-1501","4-1-1502","4-1-1601","4-1-1602","4-1-1701","4-1-1702",
+            "4-1-1801","4-1-1802","4-1-1901","4-1-1902","4-1-2001","4-1-2002","4-1-2101","4-1-2102",
+            "4-1-2201","4-1-2202","4-1-2301","4-1-2302","4-1-2401","4-1-2402","4-1-2501","4-1-2502",
+            "4-1-2601","4-1-2602","4-1-2701","4-1-2702",
+            "4-2-101","4-2-102","4-2-201","4-2-202","4-2-301","4-2-302","4-2-401","4-2-402","4-2-501",
+            "4-2-502","4-2-601","4-2-602","4-2-701","4-2-702","4-2-801","4-2-802","4-2-901","4-2-902",
+            "4-2-1001","4-2-1002","4-2-1101","4-2-1102","4-2-1201","4-2-1202","4-2-1301","4-2-1302",
+            "4-2-1401","4-2-1402","4-2-1501","4-2-1502","4-2-1601","4-2-1602","4-2-1701","4-2-1702",
+            "4-2-1801","4-2-1802","4-2-1901","4-2-1902","4-2-2001","4-2-2002","4-2-2101","4-2-2102",
+            "4-2-2201","4-2-2202","4-2-2301","4-2-2302","4-2-2401","4-2-2402","4-2-2501","4-2-2502",
+            "4-2-2601","4-2-2602","4-2-2701","4-2-2702",
+            "5-1-101","5-1-102","5-1-201","5-1-202","5-1-301","5-1-302","5-1-401","5-1-402","5-1-501",
+            "5-1-502","5-1-601","5-1-602","5-1-701","5-1-702","5-1-801","5-1-802","5-1-901","5-1-902",
+            "5-1-1001","5-1-1002","5-1-1101","5-1-1102","5-1-1201","5-1-1202","5-1-1301","5-1-1302",
+            "5-1-1401","5-1-1402","5-1-1501","5-1-1502","5-1-1601","5-1-1602","5-1-1701","5-1-1702",
+            "5-1-1801","5-1-1802","5-1-1901","5-1-1902","5-1-2001","5-1-2002","5-1-2101","5-1-2102",
+            "5-1-2201","5-1-2202","5-1-2301","5-1-2302","5-1-2401","5-1-2402","5-1-2501","5-1-2502",
+            "5-1-2601","5-1-2602","5-1-2701","5-1-2702",
+            "5-2-101","5-2-102","5-2-201","5-2-202","5-2-301","5-2-302","5-2-401","5-2-402","5-2-501",
+            "5-2-502","5-2-601","5-2-602","5-2-701","5-2-702","5-2-801","5-2-802","5-2-901","5-2-902",
+            "5-2-1001","5-2-1002","5-2-1101","5-2-1102","5-2-1201","5-2-1202","5-2-1301","5-2-1302",
+            "5-2-1401","5-2-1402","5-2-1501","5-2-1502","5-2-1601","5-2-1602","5-2-1701","5-2-1702",
+            "5-2-1801","5-2-1802","5-2-1901","5-2-1902","5-2-2001","5-2-2002","5-2-2101","5-2-2102",
+            "5-2-2201","5-2-2202","5-2-2301","5-2-2302","5-2-2401","5-2-2402","5-2-2501","5-2-2502",
+            "5-2-2601","5-2-2602","5-2-2701","5-2-2702",
+            "6-201","6-202","6-301","6-302","6-401","6-402","6-501","6-502","6-601","6-602",
+            "6-701","6-702","6-801","6-802","6-901","6-902","6-1001","6-1002","6-1101","6-1102",
+            "6-1201","6-1202","6-1301","6-1302","6-1401","6-1402","6-1501","6-1502","6-1601","6-1602",
+            "6-1701","6-1702","6-1801","6-1802","6-1901","6-1902","6-2001","6-2002","6-2101","6-2102",
+            "6-2201","6-2202","6-2301","6-2302","6-2401","6-2402","6-2501","6-2502","6-2601","6-2602",
+            "7-101","7-102","7-103","7-104","7-201","7-202","7-203","7-204","7-301","7-302",
+            "7-303","7-304","7-401","7-402","7-403","7-404","7-501","7-502","7-503","7-504",
+            "7-601","7-602","7-603","7-604","7-701","7-702","7-703","7-704","7-801","7-802",
+            "7-803","7-804","7-901","7-902","7-903","7-904","7-1001"
+        ];
+
+        // 初始化投票数据
+        let votes = JSON.parse(localStorage.getItem('balconyVotes')) || {};
+        let currentHouse = '';
+        let selectedOption = -1;
+
+        // 页面加载时生成二维码
+        document.addEventListener('DOMContentLoaded', function() {
+            generateQRCode();
+        });
+
+        // 生成二维码
+        function generateQRCode() {
+            const qrCodeElement = document.getElementById('qrCode');
+            qrCodeElement.innerHTML = '';
+            
+            // 使用qrcode.js生成二维码
+            const url = window.location.href;
+            new QRCode(qrCodeElement, {
+                text: url,
+                width: 160,
+                height: 160,
+                colorDark: "#000000",
+                colorLight: "#ffffff",
+                correctLevel: QRCode.CorrectLevel.H
+            });
+        }
+
+        // 分享到微信
+        function shareToWechat() {
+            // 检查是否在微信浏览器中
+            const isWechat = /MicroMessenger/i.test(navigator.userAgent);
+            
+            if (isWechat) {
+                // 在微信中，使用微信的分享API
+                if (typeof WeixinJSBridge !== 'undefined') {
+                    WeixinJSBridge.invoke('shareTimeline', {
+                        title: '小区包阳台方案投票',
+                        desc: '请参与小区包阳台方案投票，每户一票',
+                        link: window.location.href,
+                        imgUrl: window.location.origin + '/favicon.ico'
+                    });
+                } else {
+                    // 如果微信API不可用，提示用户手动分享
+                    alert('请点击右上角菜单，选择"分享到朋友圈"或"发送给朋友"');
+                }
+            } else {
+                // 不在微信中，提示用户
+                alert('请在微信中打开此页面进行分享，或使用"复制链接"功能');
+            }
+        }
+
+        // 复制链接
+        function copyLink() {
+            const url = window.location.href;
+            
+            // 尝试使用现代浏览器的复制API
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(url).then(() => {
+                    alert('链接已复制到剪贴板！\n\n请将链接发送到微信群，其他业主点击链接即可参与投票。');
+                }).catch(() => {
+                    fallbackCopyTextToClipboard(url);
+                });
+            } else {
+                fallbackCopyTextToClipboard(url);
+            }
+        }
+
+        // 备用复制方法
+        function fallbackCopyTextToClipboard(text) {
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            textArea.style.top = "0";
+            textArea.style.left = "0";
+            textArea.style.position = "fixed";
+            document.body.appendChild(textArea);
+            textArea.focus();
+            textArea.select();
+            
+            try {
+                const successful = document.execCommand('copy');
+                if (successful) {
+                    alert('链接已复制到剪贴板！\n\n请将链接发送到微信群，其他业主点击链接即可参与投票。');
+                } else {
+                    alert('复制失败，请手动复制以下链接：\n\n' + text);
+                }
+            } catch (err) {
+                alert('复制失败，请手动复制以下链接：\n\n' + text);
+            }
+            
+            document.body.removeChild(textArea);
+        }
+
+        // 步骤切换函数
+        function showStep(step) {
+            document.querySelectorAll('.step').forEach(el => el.classList.remove('active'));
+            document.getElementById(`step${step}`).classList.add('active');
+        }
+
+        // 门牌号验证
+        function verifyHouse() {
+            const input = document.getElementById('houseInput').value.trim();
+            const errorMsg = document.getElementById('errorMsg');
+            
+            if (validHouses.includes(input)) {
+                currentHouse = input;
+                errorMsg.style.display = 'none';
+                
+                // 检查是否已投票
+                if (votes[currentHouse]) {
+                    showStep(3);
+                    const options = ['同意', '反对', '弃权'];
+                    document.getElementById('voteResult').textContent = 
+                        `您的选择：${options[votes[currentHouse].choice]}`;
+                } else {
+                    showStep(2);
+                }
+            } else {
+                errorMsg.style.display = 'block';
+                errorMsg.textContent = '门牌号无效或不存在，请重新输入';
+            }
+        }
+
+        // 选项选择
+        function selectOption(option) {
+            selectedOption = option;
+            document.querySelectorAll('.option').forEach((el, idx) => {
+                if (idx === option) {
+                    el.classList.add('selected');
+                } else {
+                    el.classList.remove('selected');
+                }
+            });
+        }
+
+        // 提交投票
+        function submitVote() {
+            if (selectedOption === -1) {
+                alert('请选择投票选项');
+                return;
+            }
+            
+            // 记录投票（带时间戳）
+            votes[currentHouse] = {
+                choice: selectedOption,
+                timestamp: Math.floor(Date.now() / 1000)
+            };
+            
+            // 保存到本地存储
+            localStorage.setItem('balconyVotes', JSON.stringify(votes));
+            showStep(3);
+            
+            // 显示用户选择
+            const options = ['同意', '反对', '弃权'];
+            document.getElementById('voteResult').textContent = 
+                `您的选择：${options[selectedOption]}`;
+        }
+
+        // 管理员功能
+        function showAdmin() {
+            document.getElementById('adminPanel').style.display = 'block';
+            window.scrollTo(0, document.body.scrollHeight);
+        }
+
+        function loadStats() {
+            // 简单密码验证
+            if (document.getElementById('adminPass').value !== 'admin123') {
+                alert('管理员密码错误');
+                return;
+            }
+            
+            const stats = document.getElementById('stats');
+            stats.style.display = 'block';
+            
+            // 计算统计数据
+            const total = validHouses.length;
+            const voted = Object.keys(votes).length;
+            const ratio = total > 0 ? ((voted / total) * 100).toFixed(1) : 0;
+            
+            // 按选项统计
+            let agree = 0, disagree = 0, abstain = 0;
+            Object.values(votes).forEach(vote => {
+                if (vote.choice === 0) agree++;
+                if (vote.choice === 1) disagree++;
+                if (vote.choice === 2) abstain++;
+            });
+            
+            // 更新UI
+            document.getElementById('totalHouses').textContent = total;
+            document.getElementById('votedHouses').textContent = voted;
+            document.getElementById('voteRatio').textContent = ratio + '%';
+            
+            document.getElementById('agreeCount').textContent = agree;
+            document.getElementById('disagreeCount').textContent = disagree;
+            document.getElementById('abstainCount').textContent = abstain;
+            
+            const agreePercent = voted ? ((agree / voted) * 100).toFixed(1) : 0;
+            const disagreePercent = voted ? ((disagree / voted) * 100).toFixed(1) : 0;
+            const abstainPercent = voted ? ((abstain / voted) * 100).toFixed(1) : 0;
+            
+            document.getElementById('agreePercent').textContent = agreePercent + '%';
+            document.getElementById('disagreePercent').textContent = disagreePercent + '%';
+            document.getElementById('abstainPercent').textContent = abstainPercent + '%';
+            
+            // 更新进度条
+            document.querySelector('#agreeStats .fill').style.width = agreePercent + '%';
+            document.querySelector('#disagreeStats .fill').style.width = disagreePercent + '%';
+            document.querySelector('#abstainStats .fill').style.width = abstainPercent + '%';
+            
+            // 显示最终结果
+            const resultEl = document.getElementById('finalResult');
+            if (agree > disagree) {
+                resultEl.textContent = '✅ 方案通过（同意票数超过反对票数）';
+                resultEl.style.color = '#27ae60';
+            } else if (disagree > agree) {
+                resultEl.textContent = '❌ 方案未通过（反对票数超过同意票数）';
+                resultEl.style.color = '#e74c3c';
+            } else if (agree === 0 && disagree === 0) {
+                resultEl.textContent = '⏳ 暂无投票数据';
+                resultEl.style.color = '#7f8c8d';
+            } else {
+                resultEl.textContent = '⚖️ 投票平局（需进一步讨论）';
+                resultEl.style.color = '#f39c12';
+            }
+        }
+
+        function exportData() {
+            const dataStr = JSON.stringify({
+                houses: validHouses,
+                votes: votes,
+                timestamp: new Date().toISOString(),
+                total: validHouses.length
+            }, null, 2);
+            
+            const blob = new Blob([dataStr], {type: 'application/json'});
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `包阳台投票数据_${new Date().toLocaleDateString().replace(/\//g, '-')}.json`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+        }
+        
+        function resetVotes() {
+            if (confirm('确定要重置所有投票数据吗？此操作不可恢复！')) {
+                localStorage.removeItem('balconyVotes');
+                votes = {};
+                alert('投票数据已重置');
+                if (document.getElementById('stats').style.display === 'block') {
+                    loadStats();
+                }
+            }
+        }
+        
+        function resetSingleVote() {
+            const houseToReset = document.getElementById('resetHouseInput').value.trim();
+            if (!houseToReset) {
+                alert('请输入要重置的门牌号');
+                return;
+            }
+            
+            if (!validHouses.includes(houseToReset)) {
+                alert('无效的门牌号');
+                return;
+            }
+            
+            if (votes[houseToReset]) {
+                delete votes[houseToReset];
+                localStorage.setItem('balconyVotes', JSON.stringify(votes));
+                alert(`已重置 ${houseToReset} 的投票数据`);
+                
+                if (document.getElementById('stats').style.display === 'block') {
+                    loadStats();
+                }
+            } else {
+                alert('该门牌号尚未投票');
+            }
+        }
+    </script>
+</body>
+</html>
